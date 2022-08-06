@@ -1,5 +1,5 @@
 
-# petbazaarbd
+# Chat_Project
 
 It is a chat application(desktop version) by creating
 django, django websocket with sqlite3. It contains 

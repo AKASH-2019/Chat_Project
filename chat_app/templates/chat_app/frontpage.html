@@ -1,0 +1,152 @@
+{% extends 'chat_app/base.html' %}
+
+{% block style %}
+<style>
+.row-singel-content{
+   margin-left: 10px;
+}
+.row-content:last-child{
+   margin-left: 0px;
+}
+.disabled-link {
+  pointer-events: none;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+
+<div class="container-fluid">
+   <H1 class="fs-4 mt-3">Your Friends</H1>
+
+   <div class="">
+      <div id="friendListContent" class="row row-content">
+         {% for friend in friends %}
+         <div class="row-singel-content col-md-2 border text-center" style="width: 200px;">
+            
+            <img style="height: 130px;" src="https://static.vecteezy.com/system/resources/thumbnails/004/607/791/small/man-face-emotive-icon-smiling-male-character-in-blue-shirt-flat-illustration-isolated-on-white-happy-human-psychological-portrait-positive-emotions-user-avatar-for-app-web-design-vector.jpg" alt="">
+            {% if friend.friend1.username == request.user.username %} 
+               <p>{{friend.friend2}}</p>
+            {% else %}
+               <p>{{friend.friend1}}</p>
+            {% endif %} 
+
+            <div class="mt-0 pb-2">
+               <a target="_blank" href="{% url 'room' friend.room.room_id %}" class="text-white text-center border-none rounded-pill px-3 py-2" style="background-color:#0695FF; border-color: #0695FF;">
+                  message
+               </a>
+            </div>
+
+         </div>
+         {% endfor %}
+      </div>
+   </div>
+
+   <H1 class="fs-4 mt-3">People You May Know</H1>
+
+   <div class="">
+      <div class="row row-content">
+         {% for add_friend in add_friends %}
+            {% if add_friend.username != request.user.username %} 
+            <div class="row-singel-content col-md-2 border text-center" style="width: 200px;">
+               <img style="height: 130px;" src="https://static.vecteezy.com/system/resources/thumbnails/004/607/791/small/man-face-emotive-icon-smiling-male-character-in-blue-shirt-flat-illustration-isolated-on-white-happy-human-psychological-portrait-positive-emotions-user-avatar-for-app-web-design-vector.jpg" alt="">
+               <p>{{add_friend.username}}</p>
+               
+
+               <div class="mt-0 pb-2">
+                  <a class="addfriendbtn text-white text-center border-none rounded-pill px-3 py-2" data-name={{add_friend.username}} style="background-color:#0695FF; border-color: #0695FF;">
+                     <span><i class="loodIcon fa-solid fa-plus" style="font-size: 14px;"></i></span> add friend
+                  </a>
+                  <!-- fa fa-spinner fa-spin -->
+               </div>
+
+            </div>
+            {% endif %}
+         {% endfor %}
+      </div>
+   </div>
+</div>
+
+{% endblock %}
+
+
+{% block scripts %}
+<script>
+   // document.querySelectorAll("addfriendbtn").addEventListener("click", (e)=> {
+   //    e.preventDefault();
+      
+   
+   // })
+   function getCookie(name) {
+      var cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+         var cookies = document.cookie.split(';');
+         for (var i = 0; i < cookies.length; i++) {
+               var cookie = jQuery.trim(cookies[i]);
+               // Does this cookie string begin with the name we want?
+               if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+               }
+         }
+      }
+      return cookieValue;
+   }
+
+   let all_btn = document.querySelectorAll(".addfriendbtn");
+   all_btn.forEach(function(btn) {
+      btn.addEventListener("click", async (e)=> {
+         e.preventDefault();
+         // console.log(e.target.getAttribute("data-name"));
+         var username = e.target.getAttribute("data-name");
+         var form = new FormData();
+         form.append("requestFriend", username)
+         const url = `friendRequest/${username}`; 
+         
+         var data = await fetch(url);
+
+         var res = await data.json();
+         // console.log(res.room);
+         if(res.room > 0){
+               e.target.childNodes[1].childNodes[0].classList.remove("fa-solid", "fa-plus");
+               e.target.childNodes[1].childNodes[0].classList.add("fa", "fa-spinner", "fa-spin");
+               e.target.classList.add("disabled-link");
+               setTimeout(() => {
+                  var element = e.target.parentElement.parentElement;
+                  element.remove();
+
+                  let html =`
+                  <div class="row-singel-content col-md-2 border text-center" style="width: 200px;">
+                     <img style="height: 130px;" src="https://static.vecteezy.com/system/resources/thumbnails/004/607/791/small/man-face-emotive-icon-smiling-male-character-in-blue-shirt-flat-illustration-isolated-on-white-happy-human-psychological-portrait-positive-emotions-user-avatar-for-app-web-design-vector.jpg" alt=""> 
+                     <p>${username}</p>
+
+                     <div class="mt-0 pb-2">
+                        <a target="_blank" href="/room/${res.room}" class="text-white text-center border-none rounded-pill px-3 py-2" style="background-color:#0695FF; border-color: #0695FF;">
+                           message
+                        </a>
+                     </div>
+
+                  </div>
+                  `;
+                  console.log(html);
+                  document.getElementById("friendListContent").insertAdjacentHTML("afterbegin",html);
+                  // insertAdjacentHTML("beforeend", html);
+
+
+               }, 3000);
+  
+         }
+
+
+         
+         
+
+
+      });
+   });
+
+
+
+</script>
+{% endblock %}

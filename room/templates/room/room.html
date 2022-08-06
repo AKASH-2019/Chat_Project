@@ -1,0 +1,184 @@
+{% extends 'chat_app/base.html' %}
+
+{% block style %}
+    <style>
+        /* body{
+            height: 100vh;
+        } */
+        .message-list{
+            height: 85vh;
+            overflow-y: scroll;
+            scrollbar-color: rebeccapurple green;
+            scrollbar-width: thin;
+        }
+        .message-content{
+            height: 85vh;
+        }
+        .message-show{
+            height: 70vh;
+            overflow-y: scroll;
+            scrollbar-color: rebeccapurple green;
+            scrollbar-width: thin;
+        }
+        .message-input{
+            width: 90%;
+        }
+        .message-owner-image{
+            width: 30px;
+            height: 30px;
+            border-radius: 50%;
+        }
+        .message-owner-image-list{
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+        .message-list-hover{
+            background-color: aliceblue;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <div class="container-fluid">
+        <div class="border-bottom d-flex align-items-center py-2">
+            <div class="col-md-3"></div>
+            <div class="col-md-9 d-flex ">
+                <img class="message-owner-image me-2"  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bWVufGVufDB8fDB8fA%3D%3D&w=1000&q=80" alt="">
+                <span>{{chat_friend}}</span>
+            </div>
+        </div>
+        <!-- border-end vh-100 position-fixed overflow-scroll -->
+        <div class="row">
+            <div class="col-md-3 border-end message-list py-3">
+                {% for room in your_rooms %}
+                    
+                    <div class="row p-3 rounded-lg mb-2 room{{room.room_id}}">
+                        <div class="col-4">
+                            <img class="message-owner-image-list"  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bWVufGVufDB8fDB8fA%3D%3D&w=1000&q=80" alt="">
+                        </div>
+                        <div class="col-8">
+                            {% if room.friend1.username == request.user.username %} 
+                                <a href="{% url 'room' room.room_id %}">{{room.friend2}}</a>
+                            {% else %}
+                                <a href="{% url 'room' room.room_id %}">{{room.friend1}}</a>
+                            {% endif %} 
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+            <div class="col-md-9  message-content ">
+                <div id="chat-messages" class="message-show">
+                    {% for message in messages %}
+                        
+                        {% if message.user == request.user %}
+                        <div class="text-end">
+                            <img class="message-owner-image"  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bWVufGVufDB8fDB8fA%3D%3D&w=1000&q=80" alt="">
+                            <p>{{message.content}}</p>
+                        </div>
+                        {% else %}
+                        <div class="text-start">
+                            <img class="message-owner-image"  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bWVufGVufDB8fDB8fA%3D%3D&w=1000&q=80" alt="">
+                            <p>{{message.content}}</p>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                    
+                    
+                    
+                </div>
+                <div class="message-input-content d-flex mt-2">
+                    <input id="chat-message-input" type="text" class="message-input py-3 border rounded-pill rounded-end">
+                    <button id="chat-message-submit" class="message-send py-3 px-5 fs-5 text-primary border rounded-pill rounded-start"><i class="fa-solid fa-paper-plane"></i></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+
+
+
+{% endblock %}
+
+{% block scripts %}
+{{ room.room_id|json_script:"json_roomname" }}
+{{ request.user.username|json_script:"json_username" }}
+
+<script>
+    const roomName = JSON.parse(document.getElementById('json_roomname').textContent)
+    const userName = JSON.parse(document.getElementById('json_username').textContent)
+
+    const chatSocket = new WebSocket(
+        'ws://'
+        + window.location.host
+        + '/ws/'
+        + roomName
+        + '/'
+    );
+    chatSocket.onmessage = function(e){
+        console.log(onmessage)
+
+        const data = JSON.parse(e.data);
+        if(data.message){
+            let html = `
+                    
+                    <div class="text-end">
+                        <img class="message-owner-image"  src="https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?ixlib=rb-1.2.1&ixid=MnwxMjA3fDB8MHxzZWFyY2h8Mnx8bWVufGVufDB8fDB8fA%3D%3D&w=1000&q=80" alt="">
+                        <p>${data.message}</p>
+                    </div>
+            `;
+            // document.querySelector("#chat-messages").innerHTML=html;
+            document.querySelector("#chat-messages").insertAdjacentHTML("beforeend", html);
+            scrollToBottom();
+        }else{
+            alert('message is empty!');
+            
+        }
+    }
+    chatSocket.onclose = function(e){
+        console.log(onclose)
+    }
+
+    document.querySelector("#chat-message-submit").onclick = function(e){
+        e.preventDefault();
+
+        const messageInputDom = document.querySelector("#chat-message-input");
+        const message = messageInputDom.value;
+
+        // var data = await fetch('session-data/')
+        // var res = await data.json();
+        // console.log("res")
+        // console.log(res)
+
+        if(message.length == 0){
+            alert('message is empty!');
+        }
+        if(message.length > 0){
+            chatSocket.send(JSON.stringify({
+                "message": message,
+                "username": userName,
+                "room": roomName
+            }));
+
+            messageInputDom.value = '';
+        }
+        
+
+        return false;
+    }
+
+    function scrollToBottom() {
+        const obj = document.querySelector("#chat-messages");
+        obj.scrollTop = obj.scrollHeight;
+    }
+
+    scrollToBottom();
+</script>
+
+<script>
+    const routeRoom = window.location.pathname.split('/')[2];
+    document.querySelector(`.room${routeRoom}`).classList.add("message-list-hover");
+
+</script>
+
+{% endblock %}

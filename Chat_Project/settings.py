@@ -11,6 +11,7 @@ https://docs.djangoproject.com/en/3.2/ref/settings/
 """
 
 from pathlib import Path
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -86,13 +87,25 @@ ASGI_APPLICATION = 'Chat_Project.asgi.application'
 
 CHANNEL_LAYERS = {
     "default": {
-        # "BACKEND": "channels_redis.core.RedisChannelLayer",
         "BACKEND": "channels.layers.InMemoryChannelLayer",  
-        # "CONFIG": {
-        #     "hosts": [("127.0.0.1", 6379)],
-        # },
     },
 }
+# if os.environ.get('LIVE_SITE', 1) == '0':    
+#     CHANNEL_LAYERS = {
+#         "default": {
+#             "BACKEND": "channels.layers.InMemoryChannelLayer"
+#         }
+#     }
+# else:
+#     CHANNEL_LAYERS = {
+#         "default": {
+#             "BACKEND": "asgi_redis.RedisChannelLayer",
+#             "CONFIG": {
+#                 "hosts": [os.environ.get('REDIS_URL', 'redis://localhost:6379')],
+#             },
+#             "ROUTING": "chat.routing.channel_routing",
+#         },
+#     }    
 
 # Database
 # https://docs.djangoproject.com/en/3.2/ref/settings/#databases
